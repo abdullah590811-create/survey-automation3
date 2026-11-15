@@ -12,29 +12,44 @@ app = Flask(__name__)
 SUBMIT_URL = "https://forms.guest.usercontent.microsoft/formapi/api/4fef011a-ec15-4171-b293-1b10bc52fda1/users/f4a071e2-1d10-4211-b1d1-20d4fc6077c8/forms('GgHvTxXscUGykxsQvFL9oeJxoPQQHRFCsdEg1Pxgd8hUMzFCN0hQTVRQNFU0WEtPME4yV1A1NVNZUS4u')/responses"
 VERIFICATION_TOKEN = "obaT70YNbCwA8dGTULQREx9ulu2tPmNfx5OozWcaqKH-ZA57ImT-alP29FfDFSkT8qv82f0wob47qoj2_3BTMAQ7o5_1WvjvAeTFgUwymwHnYE3vwwghavvY8ENadG8Ga7U0N4uHWHPgsbxFbrAUTw2"
 
-# ----------------- محرك التوليد المتقدم بحسب تفضيلات المستخدم -----------------
-def generate_custom_response(prefs):
+# ----------------- محرك التوليد المنطقي والشرطي الذكي -----------------
+def generate_smart_response(prefs):
+    # تفضيلات الديموغرافيا
     male_pct = int(prefs.get('male_pct', 50))
+    youth_pct = int(prefs.get('youth_pct', 70))
+    region_pref = prefs.get('region_pref', 'mixed')
+    
+    # تفضيلات النيكوتين
     smoker_pct = int(prefs.get('smoker_pct', 45))
-    vape_w = int(prefs.get('vape_w', 45))
-    cig_w = int(prefs.get('cig_w', 30))
+    vape_w = int(prefs.get('vape_w', 40))
+    cig_w = int(prefs.get('cig_w', 35))
     shisha_w = int(prefs.get('shisha_w', 15))
     pouch_w = int(prefs.get('pouch_w', 10))
+    
+    # تفضيلات الشهية والصحة
     diet_pct = int(prefs.get('diet_pct', 25))
-    control_level = prefs.get('control_level', 'medium')  # low, medium, high
-    activity_level = prefs.get('activity_level', 'medium') # low, medium, high
+    control_level = prefs.get('control_level', 'medium')
+    activity_level = prefs.get('activity_level', 'medium')
 
-    # 1. الجنس
+    # 1. تحديد الجنس وحالة الحمل التابعة
     gender = "ذكر" if random.randint(1, 100) <= male_pct else "أنثى"
+    pregnancy = "لا"  # افتراضي آمن للأسئلة الإجبارية
+    if gender == "أنثى" and random.randint(1, 100) <= 6:
+        pregnancy = "نعم"
 
-    # 2. العمر
-    age = random.choices(["١٨-٢٤ سنة", "٢٥-٣٤ سنة", "٣٥-٤٤ سنة", "٤٥-٥٤ سنة", "٥٥ سنة فأكثر"], weights=[35, 42, 14, 6, 3])[0]
+    # 2. العمر والترابط الاجتماعي
+    if random.randint(1, 100) <= youth_pct:
+        age = random.choices(["١٨-٢٤ سنة", "٢٥-٣٤ سنة"], weights=[45, 55])[0]
+        marital = random.choices(["أعزب / عزباء ", "متزوج / متزوجة"], weights=[82, 18])[0]
+        education = random.choices(["بكالوريوس", "ثانوي", "دبلوم"], weights=[65, 20, 15])[0]
+    else:
+        age = random.choices(["٣٥-٤٤ سنة", "٤٥-٥٤ سنة", "٥٥ سنة فأكثر"], weights=[60, 30, 10])[0]
+        marital = random.choices(["متزوج / متزوجة", "أعزب / عزباء ", "مطلق / مطلقة", "أرمل / أرملة"], weights=[75, 15, 8, 2])[0]
+        education = random.choices(["بكالوريوس", "دراسات عليا", "دبلوم", "ثانوي"], weights=[55, 20, 15, 10])[0]
 
-    # ترابط اجتماعي
-    marital = random.choices(["أعزب / عزباء ", "متزوج / متزوجة"], weights=[80, 20])[0] if age == "١٨-٢٤ سنة" else random.choices(["متزوج / متزوجة", "أعزب / عزباء ", "مطلق / مطلقة", "أرمل / أرملة"], weights=[68, 22, 8, 2])[0]
     nationality = random.choices(["سعودي", "غير سعودي"], weights=[88, 12])[0]
 
-    # ترابط الطول والوزن
+    # ترابط الطول والوزن الواقعي
     if gender == "ذكر":
         height = random.choices(["١٥٦ سم - ١٦٥ سم", "١٦٦ سم - ١٧٥ سم", "١٧٦ سم - ١٨٥ سم", "١٨٦ سم - ١٩٥ سم"], weights=[15, 52, 28, 5])[0]
         weight = random.choices(["٦١ كجم - ٦٥ كجم", "٦٦ كجم - ٧٠ كجم", "٧١ كجم - ٧٥ كجم", "٧٦ كجم - ٨٠ كجم", "٨١ كجم - ٨٥ كجم", "٨٦ كجم - ٩٠ كجم"], weights=[10, 18, 26, 24, 14, 8])[0]
@@ -42,34 +57,71 @@ def generate_custom_response(prefs):
         height = random.choices(["١٣٦ سم - ١٤٥ سم", "١٤٦ سم - ١٥٥ سم", "١٥٦ سم - ١٦٥ سم", "١٦٦ سم - ١٧٥ سم"], weights=[5, 35, 45, 15])[0]
         weight = random.choices(["٤٦ كجم - ٥٠ كجم", "٥١ كجم - ٦٠ كجم", "٦١ كجم - ٦٥ كجم", "٦٦ كجم - ٧٠ كجم", "٧١ كجم - ٧٥ كجم"], weights=[12, 28, 32, 18, 10])[0]
 
-    education = random.choices(["ثانوي", "دبلوم", "بكالوريوس", "دراسات عليا"], weights=[18, 14, 58, 10])[0]
     income = random.choices(["أقل من ٣٠٠٠", "من ٣٠٠٠ إلى ٧٠٠٠", "من ٧٠٠١ إلى ١٢٠٠٠", "من ١٢٠٠١ إلى ٢٠٠٠٠", "أكثر من ٢٠٠٠٠"], weights=[20, 25, 30, 18, 7])[0]
-    region = random.choices(["الوسطى", "الغربية", "الشرقية", "الجنوبية", "الشمالية"], weights=[40, 28, 18, 8, 6])[0]
+    
+    if region_pref == 'central':
+        region = random.choices(["الوسطى", "الغربية", "الشرقية", "الجنوبية", "الشمالية"], weights=[70, 15, 8, 4, 3])[0]
+    elif region_pref == 'western':
+        region = random.choices(["الغربية", "الوسطى", "الشرقية", "الجنوبية", "الشمالية"], weights=[65, 20, 8, 4, 3])[0]
+    else:
+        region = random.choices(["الوسطى", "الغربية", "الشرقية", "الجنوبية", "الشمالية"], weights=[40, 28, 18, 8, 6])[0]
 
-    # 3. التدخين والنيكوتين المخصص
-    is_smoker = "مدخن حالي" if (random.randint(1, 100) <= smoker_pct) else random.choices(["غير مدخن", "مدخن سابق"], weights=[82, 18])[0]
-    uses_nicotine = "نعم" if is_smoker == "مدخن حالي" else ("لا" if is_smoker == "غير مدخن" else random.choice(["نعم", "لا"]))
-
-    # المنتج المفضل بحسب أوزان المستخدم
-    tot_prod = vape_w + cig_w + shisha_w + pouch_w or 1
-    product = random.choices(
-        ["السجائر الإلكترونية (الفيب)", "السجائر التقليدية", "الشيشة", "أكياس النيكوتين "],
-        weights=[vape_w/tot_prod, cig_w/tot_prod, shisha_w/tot_prod, pouch_w/tot_prod]
-    )[0]
-
-    freq = random.choices(["يومياً", "احيانا", "نادرا"], weights=[62, 28, 10])[0]
-    pouch_count = random.choices(["١-٥ أكياس", "٦-١٠ أكياس ", "١١-١٥ كيساً"], weights=[50, 35, 15])[0]
-    pouch_conc = random.choices(["٢-٤ ملغم", "٥-٨ ملغم", "٩-١٢ ملغم", "١٣-٢٠ ملغم"], weights=[25, 40, 25, 10])[0]
-
-    # 4. الصحة والحمية
+    # 3. الصحة والحمية
     diet = "نعم" if random.randint(1, 100) <= diet_pct else "لا"
     chronic = random.choices(["نعم", "لا"], weights=[9, 91])[0]
     respiratory = random.choices(["نعم", "لا"], weights=[8, 92])[0]
     weight_meds = random.choices(["نعم", "لا"], weights=[11, 89])[0]
 
+    # 4. التدخين والنيكوتين - التفرع المنطقي الذكي
+    is_smoker = "مدخن حالي" if (random.randint(1, 100) <= smoker_pct) else random.choices(["غير مدخن", "مدخن سابق"], weights=[82, 18])[0]
+    uses_nicotine = "نعم" if is_smoker == "مدخن حالي" else ("لا" if is_smoker == "غير مدخن" else random.choice(["نعم", "لا"]))
+
+    tot_prod = vape_w + cig_w + shisha_w + pouch_w or 1
+    primary_product = random.choices(
+        ["السجائر التقليدية", "السجائر الإلكترونية (الفيب)", "الشيشة", "أكياس النيكوتين "],
+        weights=[cig_w/tot_prod, vape_w/tot_prod, shisha_w/tot_prod, pouch_w/tot_prod]
+    )[0]
+
+    # منطق التفرع الخاص بالمنتج (تعبئة الإجابات التابعة بذكاء):
+    # السجائر
+    if is_smoker == "مدخن حالي" and primary_product == "السجائر التقليدية":
+        cig_freq = random.choices(["يومياً", "احيانا"], weights=[75, 25])[0]
+        cig_count = random.choices(["١-٥ سجائر", "٦-١٠ سجائر", "١١-٢٠ سيجارة", "أكثر من ٢٠ سيجارة"], weights=[25, 40, 25, 10])[0]
+    else:
+        cig_freq = "نادرا"
+        cig_count = "١-٥ سجائر"
+
+    # الشيشة
+    if is_smoker == "مدخن حالي" and primary_product == "الشيشة":
+        shisha_freq = random.choices(["يومياً", "احيانا"], weights=[35, 65])[0]
+        shisha_sess = random.choices(["١-٢ جلسة", "٣-٥ جلسات", "اكثر من ٥ جلسات"], weights=[55, 35, 10])[0]
+        shisha_dur = random.choices(["ساعات", "دقائق"], weights=[65, 35])[0]
+    else:
+        shisha_freq = "نادرا"
+        shisha_sess = "١-٢ جلسة"
+        shisha_dur = "دقائق"
+
+    # الفيب
+    if is_smoker == "مدخن حالي" and primary_product == "السجائر الإلكترونية (الفيب)":
+        vape_freq = random.choices(["يومياً", "احيانا"], weights=[80, 20])[0]
+        vape_count = random.choices(["١-٥ مرات", "٦-١٠ مرات", "اكثر من ١٠ مرات"], weights=[25, 40, 35])[0]
+    else:
+        vape_freq = "نادرا"
+        vape_count = "١-٥ مرات"
+
+    # الأكياس
+    if is_smoker == "مدخن حالي" and primary_product == "أكياس النيكوتين ":
+        pouch_freq = random.choices(["يومياً", "احيانا"], weights=[70, 30])[0]
+        pouch_count = random.choices(["١-٥ أكياس", "٦-١٠ أكياس ", "١١-١٥ كيساً"], weights=[45, 40, 15])[0]
+        pouch_conc = random.choices(["٥-٨ ملغم", "٩-١٢ ملغم", "١٣-٢٠ ملغم"], weights=[45, 40, 15])[0]
+    else:
+        pouch_freq = "نادرا"
+        pouch_count = "١-٥ أكياس"
+        pouch_conc = "٢-٤ ملغم"
+
     # 5. النشاط والنوم
     if activity_level == 'high':
-        v_act = random.choices(["٣-٤ مرات في الأسبوع", "٥-٧ مرات في الأسبوع", "١-٢ مره في الأسبوع "], weights=[45, 35, 20])[0]
+        v_act = random.choices(["٣-٤ مرات في الأسبوع", "٥-٧ مرات في الأسبوع"], weights=[55, 45])[0]
         m_act = random.choices(["٣-٤ مرات في الأسبوع", "٥-٧ مرات في الأسبوع"], weights=[50, 50])[0]
     elif activity_level == 'low':
         v_act = random.choices(["لا أمارس الرياضة", "١-٢ مره في الأسبوع "], weights=[75, 25])[0]
@@ -84,7 +136,7 @@ def generate_custom_response(prefs):
     night_wake = random.choices(["لم يحدث ابدا", "اقل من مرة في الأسبوع", "مرة او مرتين في الأسبوع "], weights=[35, 35, 30])[0]
     day_fat = random.choices(["لم يحدث خلال الشهر الماضي", "أقل من مرة في الأسبوع", "مرة أو مرتين في الأسبوع"], weights=[30, 40, 30])[0]
 
-    # 6. درجة التحكم بالأكل والشهية
+    # 6. الشهية ومقياس 1-8
     if control_level == 'high':
         control_score = str(random.choices([6, 7, 8], weights=[35, 45, 20])[0])
         matrix_weights = [5, 15, 35, 45]
@@ -95,6 +147,7 @@ def generate_custom_response(prefs):
         control_score = str(random.choices([3, 4, 5, 6], weights=[15, 30, 35, 20])[0])
         matrix_weights = [12, 28, 42, 18]
 
+    # بناء مصفوفة الإجابات الكاملة (تضمن عدم نقص أي سؤال إجباري)
     answers = [
         {"questionId": "r41af6ec4edc64e478058417d69a06d68", "answer1": "أوافق على المشاركة "},
         {"questionId": "r09bce8ea15a34987ae59742bee682c3a", "answer1": gender},
@@ -112,10 +165,14 @@ def generate_custom_response(prefs):
         {"questionId": "r7cbe9441d8754bac987fe49cf1fdde89", "answer1": weight_meds},
         {"questionId": "rc5b3ca21c44c43acbd0339a2c7b95395", "answer1": is_smoker},
         {"questionId": "r929c33f1365f4db59d66ecb9b2088f77", "answer1": uses_nicotine},
-        {"questionId": "r87150ac5fd0c4ad8afa7d47048cbb718", "answer1": product},
-        {"questionId": "r98f43ecbaff147889167566860f149ab", "answer1": freq},
-        {"questionId": "rfa7f543df5d34f2f9d8402cef51b8ae5", "answer1": pouch_count},
+        {"questionId": "r87150ac5fd0c4ad8afa7d47048cbb718", "answer1": primary_product},
+        
+        # إجابات المسارات الذكية لمنتجات النيكوتين
+        {"questionId": "r98f43ecbaff147889167566860f149ab", "answer1": pouch_freq if primary_product == "أكياس النيكوتين " else cig_freq},
+        {"questionId": "rfa7f543df5d34f2f9d8402cef51b8ae5", "answer1": pouch_count if primary_product == "أكياس النيكوتين " else cig_count},
         {"questionId": "rd9bbcc354a8f4fad86ffbf9c968e8cb4", "answer1": pouch_conc},
+
+        # النشاط والنوم
         {"questionId": "rc13c64558dfc4ecdba67381d17536c85", "answer1": v_act},
         {"questionId": "r14a6dbc8b563410fb1cb35e447b7e358", "answer1": "٣٠ إلى ٦٠ دقيقة"},
         {"questionId": "rbbee9bae96b54449ac2634e32f188d7a", "answer1": m_act},
@@ -126,6 +183,8 @@ def generate_custom_response(prefs):
         {"questionId": "r6542a2b43ee64e38989528336f60d8a2", "answer1": sleep_lat},
         {"questionId": "rd66ea66c2f8e42e0b3c5f0f578900be4", "answer1": night_wake},
         {"questionId": "r69b0ade4d0e74796bc023f7a2f6062ad", "answer1": day_fat},
+        
+        # أسئلة الشهية وضبط الأكل
         {"questionId": "r2393b1085172446d891c99bdca3491fd", "answer1": random.choice(["محتمل باعتدال", "من المحتمل جدا", "من المحتمل قليلا"])},
         {"questionId": "r0960b62ee63d403395ed15da0f4887bd", "answer1": random.choice(["عادة", "دائما تقريبا", "نادرا "])},
         {"questionId": "r6d869d8015bc4577b044885ac965cefc", "answer1": control_score},
@@ -134,6 +193,7 @@ def generate_custom_response(prefs):
         {"questionId": "r38137ca693d043a2bac7daf7c77e57a3", "answer1": {"id": random.randint(2, 4), "key": "d65b0472-066c-4a05-88a5-d6b9699fefd3"}}
     ]
 
+    # أسئلة المصفوفة الـ 13
     matrix_ids = [
         "rbd92822cc5434bc9b7c27730395a2fe2", "r8c05c3f922b74896b7ac7b37459c692b",
         "rf0ab48eea584423a9adc9ab5676a504e", "r9eab681b3fe04b36bb01331695e77805",
@@ -147,168 +207,189 @@ def generate_custom_response(prefs):
         choice_id = random.choices([1, 2, 3, 4], weights=matrix_weights)[0]
         answers.append({"questionId": qid, "answer1": {"id": choice_id, "key": "c37feec2-3e87-45b4-be5d-f21d837da0f3"}})
 
-    return answers, gender, age, is_smoker, product
+    info_summary = f"{gender} | {age} | {is_smoker} ({primary_product.split()[0]})"
+    return answers, info_summary
 
-# ----------------- واجهة الجوال التفاعلية مع الشرائح -----------------
+# ----------------- واجهة المستخدم الشاملة ذات التبويبات والشرائح -----------------
 HTML_PAGE = """
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تخصيص استبيان النيكوتين وسلوك الأكل</title>
+    <title>لوحة التحكم الشاملة بالاستبيان</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        input[type=range] { accent-color: #14b8a6; }
+        input[type=range] { accent-color: #0d9488; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-3 sm:p-5 pb-24 font-sans antialiased">
-    <div class="max-w-md mx-auto space-y-4">
+<body class="bg-slate-950 text-slate-100 min-h-screen p-3 sm:p-5 pb-28 font-sans antialiased">
+    <div class="max-w-lg mx-auto space-y-4">
         
-        <!-- الهيدر الرئيسي -->
+        <!-- الهيدر -->
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl flex items-center justify-between">
             <div class="flex items-center space-x-3 space-x-reverse">
                 <div class="w-10 h-10 rounded-2xl bg-teal-500 text-slate-950 font-black flex items-center justify-center text-base shadow-lg shadow-teal-500/25">
-                    ⚙️
+                    🎛️
                 </div>
                 <div>
-                    <h1 class="text-sm font-bold text-white">تخصيص إعدادات الاستبيان</h1>
-                    <p class="text-[11px] text-teal-400">تحكم كامل بنسب وتفضيلات العينة</p>
+                    <h1 class="text-sm font-bold text-white">التحكم الكامل والمنطقي بالاستبيان</h1>
+                    <p class="text-[11px] text-teal-400">تفرع ذكي + تغطية جميع الأسئلة الإجبارية</p>
                 </div>
             </div>
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
         </div>
 
-        <!-- القوالب السريعة -->
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-2.5 shadow-xl">
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-slate-300">قوالب جاهزة سريعة:</span>
-            </div>
-            <div class="grid grid-cols-3 gap-2">
-                <button onclick="applyPreset('balanced')" class="py-2.5 px-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 active:border-teal-500 rounded-xl text-center text-xs font-bold text-slate-200 transition">
-                    ⚖️ عينة متوازنة
-                </button>
-                <button onclick="applyPreset('smoker')" class="py-2.5 px-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 active:border-teal-500 rounded-xl text-center text-xs font-bold text-slate-200 transition">
-                    🚬 مدخنو فيب
-                </button>
-                <button onclick="applyPreset('healthy')" class="py-2.5 px-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 active:border-teal-500 rounded-xl text-center text-xs font-bold text-slate-200 transition">
-                    🥗 نمط صحي
-                </button>
-            </div>
+        <!-- شريط التبويبات للتنقل السهل على الجوال -->
+        <div class="flex space-x-2 space-x-reverse overflow-x-auto no-scrollbar py-1 text-xs">
+            <button onclick="switchTab('tab-demo')" id="btn-tab-demo" class="tab-btn px-3.5 py-2 bg-teal-600/30 border border-teal-500 text-teal-300 font-bold rounded-xl whitespace-nowrap shadow-sm">1. الديموغرافيا</button>
+            <button onclick="switchTab('tab-nicotine')" id="btn-tab-nicotine" class="tab-btn px-3.5 py-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold rounded-xl whitespace-nowrap shadow-sm">2. التدخين والتفرع الذكي</button>
+            <button onclick="switchTab('tab-health')" id="btn-tab-health" class="tab-btn px-3.5 py-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold rounded-xl whitespace-nowrap shadow-sm">3. الشهية والحمية</button>
+            <button onclick="switchTab('tab-activity')" id="btn-tab-activity" class="tab-btn px-3.5 py-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold rounded-xl whitespace-nowrap shadow-sm">4. النشاط والنوم</button>
         </div>
 
-        <!-- بطاقة الشرائح والتفضيلات المخصصة -->
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-4 shadow-xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h2 class="text-xs font-black text-teal-400 uppercase tracking-wider">الشرائح والتفضيلات الدقيقة</h2>
-                <button onclick="resetDefaults()" class="text-[11px] text-slate-400 hover:text-teal-400">إعادة ضبط</button>
-            </div>
-
-            <!-- 1. نسبة الجنس -->
+        <!-- تبويب 1: الديموغرافيا -->
+        <div id="tab-demo" class="tab-content bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-4 shadow-xl">
+            <h2 class="text-xs font-black text-teal-400 uppercase tracking-wider border-b border-slate-800 pb-2">خيارات السكان والديموغرافيا</h2>
+            
             <div class="space-y-1.5">
                 <div class="flex justify-between text-xs font-semibold">
                     <span class="text-slate-300">نسبة الجنس (ذكور / إناث)</span>
                     <span id="maleLabel" class="text-teal-400 font-mono">50% ذكور | 50% إناث</span>
                 </div>
-                <input id="male_pct" type="range" min="0" max="100" value="50" oninput="updateGenderLabel(this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                <input id="male_pct" type="range" min="0" max="100" value="50" oninput="updateGenderLabel(this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg">
             </div>
 
-            <!-- 2. نسبة المدخنين -->
             <div class="space-y-1.5">
                 <div class="flex justify-between text-xs font-semibold">
-                    <span class="text-slate-300">نسبة المدخنين الكلية</span>
-                    <span id="smokerLabel" class="text-teal-400 font-mono">45% مدخن</span>
+                    <span class="text-slate-300">ترجيح فئة الشباب (١٨-٣٤ سنة)</span>
+                    <span id="youthLabel" class="text-teal-400 font-mono">70%</span>
                 </div>
-                <input id="smoker_pct" type="range" min="0" max="100" value="45" oninput="document.getElementById('smokerLabel').innerText = this.value + '% مدخن'" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                <input id="youth_pct" type="range" min="10" max="100" value="70" oninput="document.getElementById('youthLabel').innerText = this.value + '%'" class="w-full h-1.5 bg-slate-800 rounded-lg">
             </div>
 
-            <!-- 3. منتجات النيكوتين المفضلة -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-semibold text-slate-300 block">تركيز المنطقة السكنية الغالبة:</label>
+                <select id="region_pref" class="w-full bg-slate-800 text-xs text-slate-200 border border-slate-700 rounded-xl p-2.5 focus:border-teal-500">
+                    <option value="mixed">توزيع طبيعي متوازن بين كل مناطق المملكة</option>
+                    <option value="central">تركيز عالي على المنطقة الوسطى (الرياض)</option>
+                    <option value="western">تركيز عالي على المنطقة الغربية (جدة / مكة)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- تبويب 2: النيكوتين والتفرع الذكي -->
+        <div id="tab-nicotine" class="tab-content hidden bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-4 shadow-xl">
+            <div class="border-b border-slate-800 pb-2 flex justify-between items-center">
+                <h2 class="text-xs font-black text-teal-400 uppercase tracking-wider">منطق التفرع الذكي للتدخين</h2>
+                <span class="text-[10px] bg-teal-500/20 text-teal-300 px-2 py-0.5 rounded-full font-bold">تفرع تلقائي آمن</span>
+            </div>
+
+            <div class="bg-teal-950/30 border border-teal-500/30 rounded-2xl p-3 text-[11px] text-teal-200 leading-relaxed">
+                💡 <b>كيف يعمل التفرع الذكي؟</b><br>
+                عندما يختار النظام "السجائر"، يتم توجيهه إجبارياً لتعبئة كمية وتكرار السجائر بدقة، ونفس الأمر للفيب والشيشة والأكياس. ولن تبقى أي خانات فارغة في النتائج.
+            </div>
+
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-semibold">
+                    <span class="text-slate-300">نسبة المدخنين العامة بالعينة</span>
+                    <span id="smokerLabel" class="text-teal-400 font-mono">45% مدخن</span>
+                </div>
+                <input id="smoker_pct" type="range" min="0" max="100" value="45" oninput="document.getElementById('smokerLabel').innerText = this.value + '% مدخن'" class="w-full h-1.5 bg-slate-800 rounded-lg">
+            </div>
+
             <div class="space-y-2 pt-2 border-t border-slate-800/80">
-                <label class="text-[11px] font-bold text-slate-400 block">توزيع منتجات النيكوتين (بين المدخنين):</label>
+                <label class="text-[11px] font-bold text-slate-400 block">ترجيح المنتجات بين المدخنين:</label>
                 <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-slate-800/60 p-2 rounded-xl border border-slate-800">
+                    <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-800">
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span>🚬 سجائر تقليدية</span>
+                            <span id="cigLbl" class="text-teal-400">35%</span>
+                        </div>
+                        <input id="cig_w" type="range" min="0" max="100" value="35" oninput="document.getElementById('cigLbl').innerText = this.value + '%'" class="w-full h-1 bg-slate-700 rounded-lg">
+                    </div>
+                    <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-800">
                         <div class="flex justify-between text-[11px] mb-1">
                             <span>💨 فيب / سحبة</span>
-                            <span id="vapeLbl" class="text-teal-400">45%</span>
+                            <span id="vapeLbl" class="text-teal-400">40%</span>
                         </div>
-                        <input id="vape_w" type="range" min="0" max="100" value="45" oninput="document.getElementById('vapeLbl').innerText = this.value + '%'" class="w-full h-1 bg-slate-700 rounded-lg">
+                        <input id="vape_w" type="range" min="0" max="100" value="40" oninput="document.getElementById('vapeLbl').innerText = this.value + '%'" class="w-full h-1 bg-slate-700 rounded-lg">
                     </div>
-                    <div class="bg-slate-800/60 p-2 rounded-xl border border-slate-800">
+                    <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-800">
                         <div class="flex justify-between text-[11px] mb-1">
-                            <span>🚬 سجائر</span>
-                            <span id="cigLbl" class="text-teal-400">30%</span>
-                        </div>
-                        <input id="cig_w" type="range" min="0" max="100" value="30" oninput="document.getElementById('cigLbl').innerText = this.value + '%'" class="w-full h-1 bg-slate-700 rounded-lg">
-                    </div>
-                    <div class="bg-slate-800/60 p-2 rounded-xl border border-slate-800">
-                        <div class="flex justify-between text-[11px] mb-1">
-                            <span>🏺 شيشة</span>
+                            <span>🏺 شيشة / معسل</span>
                             <span id="shishaLbl" class="text-teal-400">15%</span>
                         </div>
                         <input id="shisha_w" type="range" min="0" max="100" value="15" oninput="document.getElementById('shishaLbl').innerText = this.value + '%'" class="w-full h-1 bg-slate-700 rounded-lg">
                     </div>
-                    <div class="bg-slate-800/60 p-2 rounded-xl border border-slate-800">
+                    <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-800">
                         <div class="flex justify-between text-[11px] mb-1">
-                            <span>⚪ أكياس نيكوتين</span>
+                            <span>⚪ أكياس النيكوتين</span>
                             <span id="pouchLbl" class="text-teal-400">10%</span>
                         </div>
                         <input id="pouch_w" type="range" min="0" max="100" value="10" oninput="document.getElementById('pouchLbl').innerText = this.value + '%'" class="w-full h-1 bg-slate-700 rounded-lg">
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- 4. الشهية والتحكم في الأكل -->
-            <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+        <!-- تبويب 3: الشهية وسلوك الأكل -->
+        <div id="tab-health" class="tab-content hidden bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-4 shadow-xl">
+            <h2 class="text-xs font-black text-teal-400 uppercase tracking-wider border-b border-slate-800 pb-2">الشهية، الحمية وضبط الأكل</h2>
+
+            <div class="space-y-1.5">
                 <div class="flex justify-between text-xs font-semibold">
-                    <span class="text-slate-300">مستوى التحكم في الأكل (الشهية):</span>
+                    <span class="text-slate-300">نسبة متبعي حمية أو نظام غذائي صارم</span>
+                    <span id="dietLbl" class="text-teal-400 font-mono">25%</span>
                 </div>
+                <input id="diet_pct" type="range" min="0" max="100" value="25" oninput="document.getElementById('dietLbl').innerText = this.value + '%'" class="w-full h-1.5 bg-slate-800 rounded-lg">
+            </div>
+
+            <div class="space-y-2 pt-2 border-t border-slate-800/80">
+                <label class="text-xs font-semibold text-slate-300 block">نمط التحكم بالشهية وسلوك الأكل:</label>
                 <div class="grid grid-cols-3 gap-2">
                     <label class="cursor-pointer text-center">
                         <input type="radio" name="control_level" value="low" class="peer hidden">
-                        <div class="py-2 text-[11px] font-bold rounded-xl border border-slate-700 peer-checked:bg-teal-500/20 peer-checked:border-teal-500 peer-checked:text-teal-300 text-slate-400 transition">
+                        <div class="py-2.5 px-1 text-[11px] font-bold rounded-xl border border-slate-700 peer-checked:bg-teal-500/20 peer-checked:border-teal-500 peer-checked:text-teal-300 text-slate-400 transition">
                             أكل عاطفي / تحكم ضعيف
                         </div>
                     </label>
                     <label class="cursor-pointer text-center">
                         <input type="radio" name="control_level" value="medium" checked class="peer hidden">
-                        <div class="py-2 text-[11px] font-bold rounded-xl border border-slate-700 peer-checked:bg-teal-500/20 peer-checked:border-teal-500 peer-checked:text-teal-300 text-slate-400 transition">
+                        <div class="py-2.5 px-1 text-[11px] font-bold rounded-xl border border-slate-700 peer-checked:bg-teal-500/20 peer-checked:border-teal-500 peer-checked:text-teal-300 text-slate-400 transition">
                             متوسط وطبيعي
                         </div>
                     </label>
                     <label class="cursor-pointer text-center">
                         <input type="radio" name="control_level" value="high" class="peer hidden">
-                        <div class="py-2 text-[11px] font-bold rounded-xl border border-slate-700 peer-checked:bg-teal-500/20 peer-checked:border-teal-500 peer-checked:text-teal-300 text-slate-400 transition">
-                            تحكم عالي بالوزن
+                        <div class="py-2.5 px-1 text-[11px] font-bold rounded-xl border border-slate-700 peer-checked:bg-teal-500/20 peer-checked:border-teal-500 peer-checked:text-teal-300 text-slate-400 transition">
+                            تحكم صارم بالوزن
                         </div>
                     </label>
                 </div>
             </div>
+        </div>
 
-            <!-- 5. ممارسة الرياضة والحمية -->
-            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
-                <div>
-                    <label class="text-[11px] font-semibold text-slate-300 mb-1 block">نسبة متبعي الحميات</label>
-                    <div class="flex items-center gap-2">
-                        <input id="diet_pct" type="range" min="0" max="100" value="25" oninput="document.getElementById('dietLbl').innerText = this.value + '%'" class="w-full h-1.5 bg-slate-800 rounded-lg">
-                        <span id="dietLbl" class="text-xs text-teal-400 font-mono w-8">25%</span>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-[11px] font-semibold text-slate-300 mb-1 block">مستوى النشاط البدني</label>
-                    <select id="activity_level" class="w-full bg-slate-800 text-xs text-slate-200 border border-slate-700 rounded-xl p-1.5 focus:outline-none focus:border-teal-500">
-                        <option value="medium">متوسط (طبيعي)</option>
-                        <option value="high">مرتفع (رياضيون)</option>
-                        <option value="low">منخفض (خامل)</option>
-                    </select>
-                </div>
+        <!-- تبويب 4: النشاط والنوم -->
+        <div id="tab-activity" class="tab-content hidden bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-4 shadow-xl">
+            <h2 class="text-xs font-black text-teal-400 uppercase tracking-wider border-b border-slate-800 pb-2">النشاط البدني وجودة النوم</h2>
+
+            <div class="space-y-2">
+                <label class="text-xs font-semibold text-slate-300 block">معدل النشاط والتمارين الرياضية بالعينة:</label>
+                <select id="activity_level" class="w-full bg-slate-800 text-xs text-slate-200 border border-slate-700 rounded-xl p-2.5 focus:border-teal-500">
+                    <option value="medium">متوسط (تمارين 1-3 مرات أسبوعياً)</option>
+                    <option value="high">مرتفع (رياضيون نشطون 4-7 مرات)</option>
+                    <option value="low">منخفض (أغلب العينة خامل ولا يمارس)</option>
+                </select>
             </div>
         </div>
 
-        <!-- إعدادات عدد الإرسالات وزر التشغيل -->
+        <!-- بطاقة الإرسال والتشغيل -->
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 shadow-xl">
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-slate-800/50 p-2.5 rounded-2xl border border-slate-800 text-center">
-                    <span class="block text-[11px] font-bold text-slate-400">العدد الإجمالي</span>
+                    <span class="block text-[11px] font-bold text-slate-400">العدد المطلوب</span>
                     <input id="subCount" type="number" value="10" min="1" max="500" class="w-full bg-transparent text-center text-lg font-black text-white focus:outline-none">
                 </div>
                 <div class="bg-slate-800/50 p-2.5 rounded-2xl border border-slate-800 text-center">
@@ -332,66 +413,28 @@ HTML_PAGE = """
                 <div id="progressBar" class="bg-teal-400 h-2 transition-all duration-150" style="width: 0%"></div>
             </div>
 
-            <div id="logBox" class="w-full h-40 bg-slate-950 rounded-2xl p-3 font-mono text-[11px] text-teal-400 overflow-y-auto space-y-1 text-left border border-slate-800/80" dir="ltr">
-                <p class="text-slate-500">// Custom settings ready. Adjust sliders and click start.</p>
+            <div id="logBox" class="w-full h-36 bg-slate-950 rounded-2xl p-3 font-mono text-[11px] text-teal-400 overflow-y-auto space-y-1 text-left border border-slate-800/80" dir="ltr">
+                <p class="text-slate-500">// Smart branching engine ready.</p>
             </div>
         </div>
 
     </div>
 
     <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-teal-600/30', 'border-teal-500', 'text-teal-300');
+                btn.classList.add('bg-slate-900', 'border-slate-800', 'text-slate-400');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.add('bg-teal-600/30', 'border-teal-500', 'text-teal-300');
+            activeBtn.classList.remove('bg-slate-900', 'border-slate-800', 'text-slate-400');
+        }
+
         function updateGenderLabel(val) {
             document.getElementById('maleLabel').innerText = `${val}% ذكور | ${100 - val}% إناث`;
-        }
-
-        function applyPreset(name) {
-            if(name === 'balanced') {
-                document.getElementById('male_pct').value = 50;
-                document.getElementById('smoker_pct').value = 45;
-                document.getElementById('vape_w').value = 45;
-                document.getElementById('cig_w').value = 30;
-                document.getElementById('shisha_w').value = 15;
-                document.getElementById('pouch_w').value = 10;
-                document.getElementById('diet_pct').value = 25;
-                document.querySelector('input[name="control_level"][value="medium"]').checked = true;
-                document.getElementById('activity_level').value = 'medium';
-            } else if(name === 'smoker') {
-                document.getElementById('male_pct').value = 65;
-                document.getElementById('smoker_pct').value = 90;
-                document.getElementById('vape_w').value = 60;
-                document.getElementById('cig_w').value = 25;
-                document.getElementById('shisha_w').value = 10;
-                document.getElementById('pouch_w').value = 5;
-                document.getElementById('diet_pct').value = 15;
-                document.querySelector('input[name="control_level"][value="low"]').checked = true;
-                document.getElementById('activity_level').value = 'low';
-            } else if(name === 'healthy') {
-                document.getElementById('male_pct').value = 45;
-                document.getElementById('smoker_pct').value = 5;
-                document.getElementById('vape_w').value = 25;
-                document.getElementById('cig_w').value = 25;
-                document.getElementById('shisha_w').value = 25;
-                document.getElementById('pouch_w').value = 25;
-                document.getElementById('diet_pct').value = 55;
-                document.querySelector('input[name="control_level"][value="high"]').checked = true;
-                document.getElementById('activity_level').value = 'high';
-            }
-            updateLabels();
-            log(`Applied preset: ${name.toUpperCase()}`, 'text-teal-300 font-bold');
-        }
-
-        function resetDefaults() {
-            applyPreset('balanced');
-        }
-
-        function updateLabels() {
-            updateGenderLabel(document.getElementById('male_pct').value);
-            document.getElementById('smokerLabel').innerText = document.getElementById('smoker_pct').value + '% مدخن';
-            document.getElementById('vapeLbl').innerText = document.getElementById('vape_w').value + '%';
-            document.getElementById('cigLbl').innerText = document.getElementById('cig_w').value + '%';
-            document.getElementById('shishaLbl').innerText = document.getElementById('shisha_w').value + '%';
-            document.getElementById('pouchLbl').innerText = document.getElementById('pouch_w').value + '%';
-            document.getElementById('dietLbl').innerText = document.getElementById('diet_pct').value + '%';
         }
 
         function log(msg, color='text-teal-400') {
@@ -411,12 +454,13 @@ HTML_PAGE = """
             const pTxt = document.getElementById('progressTxt');
             const pct = document.getElementById('percentTxt');
 
-            // تجهيز بيانات التفضيلات
             const prefs = {
                 male_pct: document.getElementById('male_pct').value,
+                youth_pct: document.getElementById('youth_pct').value,
+                region_pref: document.getElementById('region_pref').value,
                 smoker_pct: document.getElementById('smoker_pct').value,
-                vape_w: document.getElementById('vape_w').value,
                 cig_w: document.getElementById('cig_w').value,
+                vape_w: document.getElementById('vape_w').value,
                 shisha_w: document.getElementById('shisha_w').value,
                 pouch_w: document.getElementById('pouch_w').value,
                 diet_pct: document.getElementById('diet_pct').value,
@@ -426,7 +470,7 @@ HTML_PAGE = """
 
             btn.disabled = true;
             btn.classList.add('opacity-50');
-            log(`Starting custom dispatch of ${count} responses...`, 'text-cyan-400 font-bold');
+            log(`Starting smart branching run for ${count} responses...`, 'text-cyan-400 font-bold');
 
             let success = 0;
             for(let i = 1; i <= count; i++) {
@@ -442,10 +486,10 @@ HTML_PAGE = """
                         success++;
                         log(`[✓] #${i} [${data.info}] Recorded (201 OK)`);
                     } else {
-                        log(`[!] #${i} Error: ${data.msg}`, 'text-rose-400');
+                        log(`[!] #${i} Server rejected: ${data.msg}`, 'text-rose-400');
                     }
                 } catch(e) {
-                    log(`[!] Network Error: ${e.message}`, 'text-rose-400');
+                    log(`[!] Connection Error: ${e.message}`, 'text-rose-400');
                 }
 
                 const currentPct = Math.round((i / count) * 100);
@@ -457,7 +501,7 @@ HTML_PAGE = """
 
             btn.disabled = false;
             btn.classList.remove('opacity-50');
-            log(`Finished! Total ${success} responses recorded in Microsoft Forms.`, 'text-amber-300 font-bold');
+            log(`Done! Total ${success} responses recorded with full branching.`, 'text-amber-300 font-bold');
         }
     </script>
 </body>
@@ -473,7 +517,7 @@ def submit_response():
     data = request.get_json() or {}
     prefs = data.get('prefs', {})
     
-    answers, gender, age, is_smoker, product = generate_custom_response(prefs)
+    answers, info_summary = generate_smart_response(prefs)
     
     now = datetime.utcnow()
     start = now - timedelta(minutes=random.randint(2, 5), seconds=random.randint(5, 50))
@@ -498,9 +542,7 @@ def submit_response():
 
     try:
         res = requests.post(SUBMIT_URL, headers=headers, json=payload, timeout=12)
-        prod_short = product.split(" ")[0]
-        info_str = f"{gender} | {is_smoker} ({prod_short}) | {age}"
-        return jsonify({"status": res.status_code, "info": info_str})
+        return jsonify({"status": res.status_code, "info": info_summary, "msg": res.text if res.status_code not in [200, 201] else "OK"})
     except Exception as e:
         return jsonify({"status": 500, "msg": str(e)})
 
